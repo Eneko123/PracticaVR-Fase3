@@ -20,6 +20,8 @@ public class Proyectil : MonoBehaviour
     public Collider rightFace;
     public Collider upFace;
     public Collider downFace;
+    private bool firstHit = false;
+    private bool secondHit = false;
 
     private void Awake()
     {
@@ -74,11 +76,10 @@ public class Proyectil : MonoBehaviour
             {
                 // Proyectil normal suma 1 punto
                 counter.counter++;
+                firstHit = true;
+                SableAtackDirection1(ArrowDirectionFirst(), ArrowDirectionSecond());
+                SableAtackDirection2(ArrowDirectionFirst(), ArrowDirectionSecond());
             }
-
-           //SableAtackDirection1(,);
-           //SableAtackDirection2(,);
-           gameObject.SetActive(false);
         }
     }
 
@@ -87,7 +88,7 @@ public class Proyectil : MonoBehaviour
         return isBomb;
     }
 
-    void ArrowDirection()
+    Collider ArrowDirectionFirst()
     {
         int faceHit = Random.Range(0,4);
 
@@ -98,37 +99,74 @@ public class Proyectil : MonoBehaviour
                 rightFace.enabled = false;
                 upFace.enabled = false;
                 downFace.enabled = false;
-                break;
+                return leftFace;
             case 1:
                 leftFace.enabled = false;
                 rightFace.enabled = true;
                 upFace.enabled = false;
                 downFace.enabled = false;
-                break;
+                return rightFace;
             case 2:
                 leftFace.enabled = false;
                 rightFace.enabled = false;
                 upFace.enabled = true;
                 downFace.enabled = false;
-                break;
+                return upFace;
             case 3:
                 leftFace.enabled = false;
                 rightFace.enabled = false;
                 upFace.enabled = false;
                 downFace.enabled = true;
-                break;
+                return downFace;
+            default:
+                // Valor de retorno por defecto para evitar CS0161
+                return null;
+        }
+    }
+
+    Collider ArrowDirectionSecond()
+    {
+        if (ArrowDirectionFirst() == leftFace)
+        {
+            return rightFace;
+        }
+        else if (ArrowDirectionFirst() == rightFace)
+        {
+            return leftFace;
+        }
+        else if (ArrowDirectionFirst() == upFace)
+        {
+            return downFace;
+        }
+        else if (ArrowDirectionFirst() == downFace)
+        {
+            return upFace;
+        }
+        else
+        {
+            // Valor de retorno por defecto para evitar CS0161
+            return null;
         }
     }
 
     void SableAtackDirection1(Collider Face1, Collider Face2)
     {
-        Face1.enabled = false;
-        Face2.enabled = true;
+        if (firstHit && !secondHit)
+        {
+            Face1.enabled = true;
+            Face2.enabled = false;
+            secondHit = true;
+        }
     }
     void SableAtackDirection2(Collider Face1, Collider Face2)
     {
-        Face1.enabled = false;
-        Face2.enabled = false;
-        gameObject.SetActive(false);
+        if (firstHit && secondHit)
+        {
+            Face1.enabled = false;
+            Face2.enabled = false;
+            gameObject.SetActive(false);
+            firstHit = false;
+            secondHit = false;
+        }
     }
 }
