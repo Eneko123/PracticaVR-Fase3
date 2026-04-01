@@ -78,7 +78,7 @@ public class Proyectil : MonoBehaviour
 
            //SableAtackDirection1(,);
            //SableAtackDirection2(,);
-
+           gameObject.SetActive(false);
         }
     }
 
