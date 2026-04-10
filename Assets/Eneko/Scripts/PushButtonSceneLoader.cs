@@ -6,6 +6,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 public class PushButtonSceneLoader : MonoBehaviour
 {
     public string sceneToLoad; // Configurar en el Inspector
+    public bool useButton1Sound = true; // true = button1, false = button2
 
     private XRBaseInteractable interactable;
 
@@ -21,7 +22,16 @@ public class PushButtonSceneLoader : MonoBehaviour
 
     void OnButtonPressed(SelectEnterEventArgs args)
     {
-        Debug.Log(" Boton presionado! Cargando escena: " + sceneToLoad);
+
+        // Reproducir sonido de boton
+        if (SoundEffectsManager.Instance != null)
+        {
+            if (useButton1Sound)
+                SoundEffectsManager.Instance.PlayButton1Sound();
+            else
+                SoundEffectsManager.Instance.PlayButton2Sound();
+        }
+
         SceneManager.LoadScene(sceneToLoad);
     }
 

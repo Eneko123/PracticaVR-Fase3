@@ -36,6 +36,10 @@ public class EventoMando : MonoBehaviour
 
     private void OnMenuButtonPressed(InputAction.CallbackContext context)
     {
+        // Reproducir sonido al abrir/cerrar menu
+        if (SoundEffectsManager.Instance != null)
+            SoundEffectsManager.Instance.PlayButton2Sound();
+
         if (isPaused)
             ResumeGame();
         else
@@ -53,6 +57,10 @@ public class EventoMando : MonoBehaviour
         if (gameplayUI != null)
             gameplayUI.SetActive(false);
 
+        // Pausar música de fondo
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PauseMusic();
+
         Debug.Log("Juego pausado");
     }
 
@@ -67,17 +75,29 @@ public class EventoMando : MonoBehaviour
         if (gameplayUI != null)
             gameplayUI.SetActive(true);
 
+        // Reanudar musica de fondo
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.ResumeMusic();
+
         Debug.Log("Juego reanudado");
     }
 
     // Para botones del menu
     public void ResumeGameButton()
     {
+        // Reproducir sonido de boton
+        if (SoundEffectsManager.Instance != null)
+            SoundEffectsManager.Instance.PlayButton1Sound();
+
         ResumeGame();
     }
 
     public void RestartLevel()
     {
+        // Reproducir sonido de boton
+        if (SoundEffectsManager.Instance != null)
+            SoundEffectsManager.Instance.PlayButton2Sound();
+
         Time.timeScale = 1f;
 
         if (pauseMenuUI != null)
@@ -93,6 +113,10 @@ public class EventoMando : MonoBehaviour
 
     public void GoToMainMenu()
     {
+        // Reproducir sonido de boton
+        if (SoundEffectsManager.Instance != null)
+            SoundEffectsManager.Instance.PlayButton2Sound();
+
         Time.timeScale = 1f;
 
         if (pauseMenuUI != null)

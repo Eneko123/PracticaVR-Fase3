@@ -233,6 +233,12 @@ public class Proyectil : MonoBehaviour
 
     private void Deactivate()
     {
+        // Reproducir sonido correspondiente
+        if (SoundEffectsManager.Instance != null)
+        {
+            SoundEffectsManager.Instance.PlayProjectileSound(currentType);
+        }
+
         HideAllArrowUI();
         DisableAllColliders();
         waitingForOpposite = false;

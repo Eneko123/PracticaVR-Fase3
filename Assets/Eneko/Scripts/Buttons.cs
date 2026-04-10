@@ -10,6 +10,12 @@ public class Buttons : MonoBehaviour
     public TMP_Text leftText;
     public TMP_Text rigthText;
 
+    //private void Awake()
+    //{
+    //    leftSable.SetActive(false);
+    //    rigthSable.SetActive(false);
+    //}
+
     private void Start()
     {
         if (GameConfig.leftSableActive)
@@ -24,15 +30,26 @@ public class Buttons : MonoBehaviour
 
     public void ActiveDesactiveLeftSable()
     {
+        Debug.Log("Funcion llamada");
+        // Reproducir sonido de boton
+        //if (SoundEffectsManager.Instance != null)
+        //    SoundEffectsManager.Instance.PlayButton1Sound();
+
         GameConfig.leftSableActive = !GameConfig.leftSableActive;
         if (GameConfig.leftSableActive)
             leftText.text = "Yes";
         else
-            leftText.text = "No"; 
+            leftText.text = "No";
     }
 
     public void ActiveDesactiveRigthSable()
     {
+        Debug.Log("Funcion llamada");
+
+        // Reproducir sonido de boton
+        //if (SoundEffectsManager.Instance != null)
+        //    SoundEffectsManager.Instance.PlayButton1Sound();
+
         GameConfig.rightSableActive = !GameConfig.rightSableActive;
         if (GameConfig.rightSableActive)
             rigthText.text = "Yes";
@@ -40,10 +57,27 @@ public class Buttons : MonoBehaviour
             rigthText.text = "No";
     }
 
-    public void UpMax() { GameConfig.counterMax++; }
-    public void DownMax() { 
+    public void UpMax()
+    {
+        Debug.Log("Funcion llamada");
+
+        // Reproducir sonido de boton
+        //if (SoundEffectsManager.Instance != null)
+        //    SoundEffectsManager.Instance.PlayButton2Sound();
+
+        GameConfig.counterMax++;
+    }
+
+    public void DownMax()
+    {
+        Debug.Log("Funcion llamada");
+
+        //if (SoundEffectsManager.Instance != null)
+        //    SoundEffectsManager.Instance.PlayButton2Sound();
+
         if (GameConfig.counterMax > 1)
-            GameConfig.counterMax--; }
+            GameConfig.counterMax--;
+    }
 
     private void Update()
     {
