@@ -1,172 +1,241 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Proyectil : MonoBehaviour
 {
-    private Transform end;
-    private float speed;
-    private Vector3 direction;
-    private Counter counter;
-    public float maxLifeTime = 5f;
-    private float lifeTime;
+    public enum Type { Arrow, Normal, Bomb }
+    public enum Direction { Left, Right, Up, Down }
 
-    // Nuevas variables para el sistema de bombas
-    private bool isBomb;
-    private Renderer proyectilRenderer;
+    [Header("Configuración")]
+    public float maxLifeTime = 5f;
     public Color normalColor = Color.blue;
     public Color bombColor = Color.red;
 
-    // Nuevos coliders para sistema de flechas
-    public Collider leftFace;
-    public Collider rightFace;
-    public Collider upFace;
-    public Collider downFace;
-    private bool firstHit = false;
-    private bool secondHit = false;
+    [Header("Colisionadores")]
+    public Collider mainCollider;
+    public Collider leftFace, rightFace, upFace, downFace;
+
+    [Header("UI Flechas")]
+    public GameObject leftArrowUI, rightArrowUI, upArrowUI, downArrowUI;
+
+    private Transform endPoint;
+    private Counter counter;
+    private Renderer proyectilRenderer;
+
+    private Vector3 direction;
+    private float speed, lifeTime;
+    private Type currentType;
+    private Direction expectedDirection;
+
+    // Variables para el sistema de flechas
+    private Direction activeDirection;
+    private bool waitingForOpposite = false;
 
     private void Awake()
     {
-        end = EndPoint.Instance.transform;
+        endPoint = EndPoint.Instance.transform;
         counter = FindAnyObjectByType<Counter>();
         proyectilRenderer = GetComponent<Renderer>();
+
+        HideAllArrowUI();
+        DisableAllColliders();
     }
 
-    public void Launch(float destinationOffsetRange, bool bomb, float projectileSpeed)
+    public void Launch(float destinationOffsetRange, Type type, float projectileSpeed)
     {
         speed = projectileSpeed;
         lifeTime = maxLifeTime;
-        isBomb = bomb;
+        currentType = type;
+        waitingForOpposite = false;
 
         if (proyectilRenderer != null)
-        {
-            proyectilRenderer.material.color = isBomb ? bombColor : normalColor;
-        }
+            proyectilRenderer.material.color = (type == Type.Bomb) ? bombColor : normalColor;
 
         float offset = Random.Range(-destinationOffsetRange, destinationOffsetRange);
+        Vector3 target = new Vector3(endPoint.position.x + offset, endPoint.position.y, endPoint.position.z);
+        direction = (target - transform.position).normalized;
 
-        Vector3 targetPos = new Vector3(end.position.x + offset, end.position.y, end.position.z);
-
-        direction = (targetPos - transform.position).normalized;
+        if (type == Type.Arrow) SetupArrow();
+        else SetupHit(mainCollider);
     }
 
     private void Update()
     {
-        transform.Translate(direction * speed * Time.deltaTime);
-        LifeTime();
-    }
+        transform.Translate(direction * speed * Time.deltaTime, Space.World);
 
-    void LifeTime()
-    {
+        if (currentType == Type.Arrow)
+            transform.rotation = Quaternion.LookRotation(-direction, Vector3.up);
+        else
+            transform.Rotate(Vector3.up, 30f * Time.deltaTime);
+
         lifeTime -= Time.deltaTime;
-        if (lifeTime < 0)
-        {
-            this.gameObject.SetActive(false);
-        }
+        if (lifeTime <= 0f) Deactivate();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Sable"))
+        if (!other.CompareTag("Sable")) return;
+
+        // Determinar que collider fue tocado mediante raycasting o comparacion de bounds
+        Collider hitCollider = DetermineHitCollider(other);
+
+        if (hitCollider == null)
         {
-            if (isBomb)
+            return;
+        }
+
+        if (hitCollider == mainCollider)
+        {
+            if (currentType == Type.Bomb)
             {
-                // Las bombas restan 1 punto
-                counter.counter--;
+                counter.counter -= 1;
             }
             else
             {
-                // Proyectil normal suma 1 punto
-                counter.counter++;
-                firstHit = true;
-                SableAtackDirection1(ArrowDirectionFirst(), ArrowDirectionSecond());
-                SableAtackDirection2(ArrowDirectionFirst(), ArrowDirectionSecond());
+                counter.counter += 1;
+            }
+            Deactivate();
+        }
+        else if (currentType == Type.Arrow)
+        {
+            Direction touchedDirection = GetDirectionFromCollider(hitCollider);
+
+            if (!waitingForOpposite)
+            {
+                activeDirection = touchedDirection;
+                waitingForOpposite = true;
+            }
+            else
+            {
+                bool isOpposite = IsOppositeDirection(activeDirection, touchedDirection);
+
+                if (isOpposite && touchedDirection == expectedDirection)
+                {
+                    counter.counter += 1;
+                    Deactivate();
+                }
+                //else if (!isOpposite)
+                //{
+                //    Debug.Log($"✗ No es opuesta. Tocó {activeDirection} → {touchedDirection} (no son opuestas)");
+                //    // NO desactivar, permitir seguir intentando
+                //}
+                //else if (touchedDirection != expectedDirection)
+                //{
+                //    Deactivate();
+                //}
             }
         }
     }
 
-    public bool IsBomb()
+    // Metodo para determinar que collider fue golpeado
+    private Collider DetermineHitCollider(Collider sableCollider)
     {
-        return isBomb;
+        // Obtener el punto de contacto aproximado
+        Vector3 sableCenter = sableCollider.bounds.center;
+
+        // Verificar cada collider y ver cuál esta mas cerca del punto de contacto
+        float minDistance = float.MaxValue;
+        Collider closestCollider = null;
+
+        Collider[] collidersToCheck = { mainCollider, leftFace, rightFace, upFace, downFace };
+
+        foreach (Collider col in collidersToCheck)
+        {
+            if (col != null && col.enabled)
+            {
+                Vector3 closestPoint = col.ClosestPoint(sableCenter);
+                float distance = Vector3.Distance(closestPoint, sableCenter);
+
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestCollider = col;
+                }
+            }
+        }
+
+        return closestCollider;
     }
 
-    Collider ArrowDirectionFirst()
+    private Direction GetDirectionFromCollider(Collider col)
     {
-        int faceHit = Random.Range(0,4);
+        if (col == leftFace) return Direction.Left;
+        if (col == rightFace) return Direction.Right;
+        if (col == upFace) return Direction.Up;
+        if (col == downFace) return Direction.Down;
+        return Direction.Left; // default
+    }
 
-        switch (faceHit)
+    private bool IsOppositeDirection(Direction dir1, Direction dir2)
+    {
+        if (dir1 == Direction.Left && dir2 == Direction.Right) return true;
+        if (dir1 == Direction.Right && dir2 == Direction.Left) return true;
+        if (dir1 == Direction.Up && dir2 == Direction.Down) return true;
+        if (dir1 == Direction.Down && dir2 == Direction.Up) return true;
+        return false;
+    }
+
+    //private Direction GetOppositeDirection(Direction dir)
+    //{
+    //    switch (dir)
+    //    {
+    //        case Direction.Left: return Direction.Right;
+    //        case Direction.Right: return Direction.Left;
+    //        case Direction.Up: return Direction.Down;
+    //        case Direction.Down: return Direction.Up;
+    //        default: return Direction.Left;
+    //    }
+    //}
+
+    private void SetupArrow()
+    {
+        int rand = Random.Range(0, 4);
+        DisableAllColliders();
+        HideAllArrowUI();
+
+        // Habilitar todos los colliders de cara para detectar cualquier toque
+        if (leftFace != null) leftFace.enabled = true;
+        if (rightFace != null) rightFace.enabled = true;
+        if (upFace != null) upFace.enabled = true;
+        if (downFace != null) downFace.enabled = true;
+
+        switch (rand)
         {
-            case 0:
-                leftFace.enabled = true;
-                rightFace.enabled = false;
-                upFace.enabled = false;
-                downFace.enabled = false;
-                return leftFace;
-            case 1:
-                leftFace.enabled = false;
-                rightFace.enabled = true;
-                upFace.enabled = false;
-                downFace.enabled = false;
-                return rightFace;
-            case 2:
-                leftFace.enabled = false;
-                rightFace.enabled = false;
-                upFace.enabled = true;
-                downFace.enabled = false;
-                return upFace;
-            case 3:
-                leftFace.enabled = false;
-                rightFace.enabled = false;
-                upFace.enabled = false;
-                downFace.enabled = true;
-                return downFace;
-            default:
-                // Valor de retorno por defecto para evitar CS0161
-                return null;
+            case 0: expectedDirection = Direction.Left; leftArrowUI?.SetActive(true); break;
+            case 1: expectedDirection = Direction.Right; rightArrowUI?.SetActive(true); break;
+            case 2: expectedDirection = Direction.Up; upArrowUI?.SetActive(true); break;
+            case 3: expectedDirection = Direction.Down; downArrowUI?.SetActive(true); break;
         }
     }
 
-    Collider ArrowDirectionSecond()
+    private void SetupHit(Collider activeCol)
     {
-        if (ArrowDirectionFirst() == leftFace)
-        {
-            return rightFace;
-        }
-        else if (ArrowDirectionFirst() == rightFace)
-        {
-            return leftFace;
-        }
-        else if (ArrowDirectionFirst() == upFace)
-        {
-            return downFace;
-        }
-        else if (ArrowDirectionFirst() == downFace)
-        {
-            return upFace;
-        }
-        else
-        {
-            // Valor de retorno por defecto para evitar CS0161
-            return null;
-        }
+        DisableAllColliders();
+        HideAllArrowUI();
+        if (activeCol != null) activeCol.enabled = true;
     }
 
-    void SableAtackDirection1(Collider Face1, Collider Face2)
+    private void DisableAllColliders()
     {
-        if (firstHit && !secondHit)
-        {
-            Face1.enabled = true;
-            Face2.enabled = false;
-            secondHit = true;
-        }
+        if (mainCollider != null) mainCollider.enabled = false;
+        if (leftFace != null) leftFace.enabled = false;
+        if (rightFace != null) rightFace.enabled = false;
+        if (upFace != null) upFace.enabled = false;
+        if (downFace != null) downFace.enabled = false;
     }
-    void SableAtackDirection2(Collider Face1, Collider Face2)
+
+    private void HideAllArrowUI()
     {
-        if (firstHit && secondHit)
-        {
-            Face1.enabled = false;
-            Face2.enabled = false;
-            gameObject.SetActive(false);
-            firstHit = false;
-            secondHit = false;
-        }
+        if (leftArrowUI != null) leftArrowUI.SetActive(false);
+        if (rightArrowUI != null) rightArrowUI.SetActive(false);
+        if (upArrowUI != null) upArrowUI.SetActive(false);
+        if (downArrowUI != null) downArrowUI.SetActive(false);
+    }
+
+    private void Deactivate()
+    {
+        HideAllArrowUI();
+        DisableAllColliders();
+        waitingForOpposite = false;
+        gameObject.SetActive(false);
     }
 }

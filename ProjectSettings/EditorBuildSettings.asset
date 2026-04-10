@@ -17,6 +17,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Eneko/Scenes/Arrows.unity
     guid: 73a10af5219276e42bb442ca95ce51c8
+  - enabled: 1
+    path: Assets/IsaacEscudero/Scenes/Menu VR.unity
+    guid: 3fb6529af92986246a4b49982928ff81
+  - enabled: 1
+    path: Assets/IsaacEscudero/Scenes/Nivel Complicado.unity
+    guid: 569b0972d22586c41aa504ffdebd3d90
+  - enabled: 1
+    path: Assets/IsaacEscudero/Scenes/Nivel Facil.unity
+    guid: f2588463a99902742a36cabbb80c31c2
+  - enabled: 1
+    path: Assets/IsaacEscudero/Scenes/Nivel Flechas.unity
+    guid: 6acace231cdfcce4a95d8f5ef175cb9f
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 78a0e02645abe2b4080fcadbae6fda81, type: 2}

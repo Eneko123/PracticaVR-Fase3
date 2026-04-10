@@ -1,79 +1,96 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
-    public GameObject projectil; // Solo necesitas un prefab ahora
-    public float bombProbability = 0.3f;
-    public List<GameObject> pool = new List<GameObject>();
+    [Header("Prefab Único")]
+    public GameObject projectilePrefab; // Asigna aqui el prefab que quieras en cada nivel
 
-    public float spawnDistance = 50;
-    public float destinationOffsetRange = 2;
+    [Header("Configuración de Nivel")]
+    public bool levelArrowMode = true;
 
-    // Variables de velocidad configurables
-    public float minSpeed = 5f;
-    public float maxSpeed = 10f;
-    public float minSpawnTime = 2f;
-    public float maxSpawnTime = 3f;
+    [Range(0f, 1f)] public float bombProbability = 0.3f;
 
+    [Header("Spawn")]
+    public float spawnDistance = 50f;
+    public float destinationOffsetRange = 2f;
+    public float minSpeed = 5f, maxSpeed = 10f;
+    public float minSpawnTime = 2f, maxSpawnTime = 3f;
 
+    private List<GameObject> pool = new List<GameObject>();
     private int poolSize = 10;
-    private float cooldown = 0;
+    private float cooldown = 0f;
     private float nextSpawnTime;
 
     void Start()
     {
-        AddProyectil(poolSize);
+        if (projectilePrefab == null)
+        {
+            Debug.LogError("Spawner: Asigna un prefab en el Inspector.");
+            return;
+        }
+        InitializePool(poolSize);
         nextSpawnTime = Random.Range(minSpawnTime, maxSpawnTime);
     }
 
     void Update()
     {
         cooldown += Time.deltaTime;
-
         if (cooldown >= nextSpawnTime)
         {
-            ShootProyectil(OriginPoint());
+            Shoot();
             cooldown = 0f;
             nextSpawnTime = Random.Range(minSpawnTime, maxSpawnTime);
         }
     }
 
-    void AddProyectil(int amount)
+    void InitializePool(int amount)
     {
         for (int i = 0; i < amount; i++)
         {
-            GameObject p = Instantiate(projectil);
+            GameObject p = Instantiate(projectilePrefab);
             p.SetActive(false);
             pool.Add(p);
         }
     }
 
-    void ShootProyectil(Vector3 origin)
+    void Shoot()
     {
-        bool isBomb = Random.value < bombProbability;
-        float speed = Random.Range(minSpeed, maxSpeed);
-
-        for (int i = 0; i < pool.Count; i++)
+        // Decidir tipo segun la configuracion del nivel
+        Proyectil.Type typeToSpawn;
+        if (levelArrowMode)
         {
-            if (!pool[i].activeSelf)
+            typeToSpawn = Proyectil.Type.Arrow;
+        }
+        else
+        {
+            typeToSpawn = (Random.value < bombProbability) ? Proyectil.Type.Bomb : Proyectil.Type.Normal;
+        }
+
+        float speed = Random.Range(minSpeed, maxSpeed);
+        Vector3 origin = OriginPoint();
+
+        foreach (GameObject p in pool)
+        {
+            if (!p.activeSelf)
             {
-                pool[i].transform.position = origin;
-                pool[i].SetActive(true);
-                pool[i].GetComponent<Proyectil>().Launch(destinationOffsetRange, isBomb, speed);
+                p.transform.position = origin;
+                p.SetActive(true);
+                p.GetComponent<Proyectil>().Launch(destinationOffsetRange, typeToSpawn, speed);
                 return;
             }
         }
 
-        AddProyectil(1);
-        ShootProyectil(origin);
+        // Si el pool esta lleno, aniadir uno mas
+        InitializePool(1);
+        Shoot();
     }
 
     Vector3 OriginPoint()
     {
         Transform cam = Camera.main.transform;
-        Vector3 spawnPos = cam.position + cam.forward * spawnDistance;
-        spawnPos.y = 1.5f;
-        return spawnPos;
+        Vector3 pos = cam.position + cam.forward * spawnDistance;
+        pos.y = 1.5f;
+        return pos;
     }
 }

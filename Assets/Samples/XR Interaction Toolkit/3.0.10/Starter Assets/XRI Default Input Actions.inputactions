@@ -879,15 +879,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "MenuPausado",
-                    "type": "Button",
-                    "id": "e4ed2399-45d2-4b97-be74-f3fdfd5bda73",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Select Value",
                     "type": "Value",
                     "id": "e6005f29-e4c1-4f3b-8bf7-3a28bab5ca9c",
@@ -985,6 +976,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "MenuPulsado",
+                    "type": "Button",
+                    "id": "1764b6f1-7742-44f3-a6a2-b60520846ab3",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -1040,17 +1040,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "Select",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "fd52b5c3-2730-4957-b76e-947250b29216",
-                    "path": "<XRController>{LeftHand}/{MenuButton}",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "MenuPausado",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -1282,6 +1271,17 @@
                     "processors": "ScaleVector2(x=0),StickDeadzone",
                     "groups": "",
                     "action": "Translate Manipulation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "01d40c84-a36a-4f2a-b5bd-b66410fbe49a",
+                    "path": "<XRController>{LeftHand}/{MenuButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MenuPulsado",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
